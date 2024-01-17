@@ -4,7 +4,7 @@ const app = express();
 const cors = require("cors");
 require("dotenv").config();
 // const stripe = require("stripe")(process.env.STRIPE_SK_KEY);
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
@@ -34,8 +34,25 @@ async function run() {
 
 
     // biodata related api
+    app.get('/limit-biodatas',async(req,res)=>{
+      const result = await bioDataCollection.find().sort({age:1}).toArray();
+      res.send(result);
+    })
+
     app.get('/biodatas',async(req,res)=>{
       const result = await bioDataCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.get('/gender-biodatas',async(req,res)=>{
+      const result = await bioDataCollection.find().toArray();
+      res.send(result);
+    })
+
+    app.get('/biodatas/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id : new ObjectId(id)}
+      const result = await bioDataCollection.findOne(query)
       res.send(result);
     })
 
