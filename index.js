@@ -26,8 +26,36 @@ const client = new MongoClient(process.env.DB_URI, {
 async function run() {
   try {
     
+    // collection
+    const bioDataCollection = client.db('wedlockBD').collection('biodatas');
+    const successStoryCollection = client.db('wedlockBD').collection('successStories');
+    const requestCollection = client.db('wedlockBD').collection('requests');
+    const favoriteCollection = client.db('wedlockBD').collection('favorites');
 
 
+    // biodata related api
+    app.get('/biodatas',async(req,res)=>{
+      const result = await bioDataCollection.find().toArray();
+      res.send(result);
+    })
+
+    // successStory related api
+    app.get('/successStories',async(req,res)=>{
+      const result = await successStoryCollection.find().toArray();
+      res.send(result);
+    })
+
+    // contact request related api
+    app.get('/contact-request',async(req,res)=>{
+      const result = await requestCollection.find().toArray();
+      res.send(result);
+    })
+
+    // favorite related api
+    app.get('/favorite',async(req,res)=>{
+      const result = await favoriteCollection.find().toArray();
+      res.send(result);
+    })
 
 
 
