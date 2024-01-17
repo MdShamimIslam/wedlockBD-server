@@ -34,25 +34,32 @@ async function run() {
 
 
     // biodata related api
+    // get bio by sort
     app.get('/limit-biodatas',async(req,res)=>{
       const result = await bioDataCollection.find().sort({age:1}).toArray();
       res.send(result);
     })
-
+    // get all bio
     app.get('/biodatas',async(req,res)=>{
       const result = await bioDataCollection.find().toArray();
       res.send(result);
     })
-
+    // get gender based bio 
     app.get('/gender-biodatas',async(req,res)=>{
       const result = await bioDataCollection.find().toArray();
       res.send(result);
     })
-
+    // get bio for specific details bio
     app.get('/biodatas/:id',async(req,res)=>{
       const id = req.params.id;
       const query = { _id : new ObjectId(id)}
       const result = await bioDataCollection.findOne(query)
+      res.send(result);
+    })
+    // insert bio from client
+    app.post('/biodatas',async(req,res)=>{
+      const biodata = req.body;
+      const result = await bioDataCollection.insertOne(biodata);
       res.send(result);
     })
 
@@ -69,10 +76,20 @@ async function run() {
     })
 
     // favorite related api
+    // get all favorite data
     app.get('/favorite',async(req,res)=>{
       const result = await favoriteCollection.find().toArray();
       res.send(result);
     })
+
+    // post by client side bioInfo
+    app.post('/favorites',async(req,res)=>{
+      const bioInfo = req.body;
+      const result = await favoriteCollection.insertOne(bioInfo);
+      res.send(result);
+    })
+
+
 
 
 
