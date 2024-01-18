@@ -51,6 +51,13 @@ async function run() {
       const result = await bioDataCollection.findOne(query);
       res.send(result);
     });
+    // get bio by user email 
+    app.get('/v1/biodatas',async(req,res)=>{
+      const userEmail = req.query.email;
+      const query = {contact_email:userEmail};
+      const result = await bioDataCollection.findOne(query);
+      res.send(result);
+    })
     // insert bio from client
     app.post("/biodatas", async (req, res) => {
       const biodata = req.body;
