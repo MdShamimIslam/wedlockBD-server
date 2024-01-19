@@ -105,6 +105,18 @@ async function run() {
       const result = await bioDataCollection.updateOne(filter,updatedDoc,options);
       res.send(result);
     })
+    // make biodata premium_status(true) by params email to user
+    app.patch('/biodatas-premium/:email',async(req,res)=>{
+      const email = req.params.email;
+      const filter = { contact_email : email};
+      const updatedDoc = {
+        $set : {
+          premium_status : true
+        }
+      }
+      const result = await bioDataCollection.updateOne(filter,updatedDoc);
+      res.send(result);
+    })
     // END------biodata related api-------
 
 
@@ -140,6 +152,18 @@ async function run() {
       const id = req.params.id;
       const query = { _id : new ObjectId(id)};
       const result = await requestCollection.deleteOne(query);
+      res.send(result);
+    })
+    //  contact request status updated
+    app.patch('/contact-request/:id',async(req,res)=>{
+      const id = req.params.id;
+      const filter = { _id : new ObjectId(id)};
+      const updatedDoc = {
+        $set : {
+          status : 'Approved'
+        }
+      }
+      const result = await requestCollection.updateOne(filter,updatedDoc);
       res.send(result);
     })
 
@@ -185,10 +209,30 @@ async function run() {
     const result = await userCollection.insertOne(user);
     res.send(result);
     })
-
-    // get all users from db
+    // get all users by email from db
     app.get('/users',async(req,res)=>{
       const result = await userCollection.find().toArray();
+      res.send(result);
+    })
+    // delete user
+    app.delete('/users/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id : new ObjectId(id)};
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    })
+    // delete user
+    app.put('/users/:id',async(req,res)=>{
+      const userInfo = req.body;
+      const id = req.params.id;
+      const filter = { _id : new ObjectId(id)};
+      const options = { upsert : true };
+      const updatedDoc = {
+        $set : {
+          role :userInfo.role
+        }
+      }
+      const result = await userCollection.updateOne(filter,updatedDoc,options);
       res.send(result);
     })
     // END------users related api-------
@@ -197,10 +241,25 @@ async function run() {
 
 
     // START------premium bio related api-------
+    // save premium info from client side
     app.post('/premium-bio',async(req,res)=>{
       const premiumBio = req.body;
       const result = await premiumBiodataCollection.insertOne(premiumBio);
       res.send(result)
+    })
+    // get premium bio by email
+    app.get('/premium-bio',async(req,res)=>{
+      const email = req.query.email;
+      const query = {contact_email:email};
+      const result = await premiumBiodataCollection.find(query).toArray();
+      res.send(result);
+    })
+    // delete premium bio
+    app.delete('/premium-bio/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id : new ObjectId(id)};
+      const result = await premiumBiodataCollection.deleteOne(query);
+      res.send(result);
     })
 
     // END------premium bio related api-------
