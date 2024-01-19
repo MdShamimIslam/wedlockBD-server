@@ -27,6 +27,8 @@ async function run() {
     const requestCollection = client.db("wedlockBD").collection("requests");
     const favoriteCollection = client.db("wedlockBD").collection("favorites");
     const userCollection = client.db("wedlockBD").collection("users");
+    const premiumBiodataCollection = client.db("wedlockBD").collection("premiumBiodatas");
+
 
     // START------biodata related api-------
     // get bio by sort
@@ -73,7 +75,6 @@ async function run() {
       const result = await bioDataCollection.insertOne(newBiodata);
       res.send(result);
     });
-
     // update bio
     app.put('/biodatas',async(req,res)=>{
       const updateBio = req.body;
@@ -84,7 +85,6 @@ async function run() {
         $set : {
           age:updateBio.age,
           biodata_type:updateBio.biodata_type,
-          contact_email:updateBio.contact_email,
           contact_number:updateBio.contact_number,
           date_of_birth:updateBio.date_of_birth,
           expected_partner_age:updateBio.expected_partner_age,
@@ -96,7 +96,6 @@ async function run() {
           name:updateBio.name,
           occupation:updateBio.occupation,
           permanent_division_name:updateBio.permanent_division_name,
-          premium_status:updateBio?.premium_status,
           present_division_name:updateBio.present_division_name,
           profile_image:updateBio.profile_image,
           race:updateBio.race,
@@ -108,6 +107,9 @@ async function run() {
     })
     // END------biodata related api-------
 
+
+
+
     // START------successStory related api-------
     
     app.get("/successStories", async (req, res) => {
@@ -116,27 +118,60 @@ async function run() {
     });
     // END------successStory related api-------
 
+
+
     // START------contact request related api-------
+
+    // get request contact info (user email get and only get)
     app.get("/contact-request", async (req, res) => {
-      const result = await requestCollection.find().toArray();
+      const userEmail = req.query.email;
+      const  query = {selfEmail : userEmail}
+      const result = await requestCollection.find(query).toArray();
       res.send(result);
     });
+    // save some bio when payment confirm
+    app.post("/contact-request", async (req, res) => {
+      const contactInfo = req.body;
+      const result = await requestCollection.insertOne(contactInfo);
+      res.send(result)
+    });
+    // delete contact request
+    app.delete('/contact-request/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id : new ObjectId(id)};
+      const result = await requestCollection.deleteOne(query);
+      res.send(result);
+    })
+
     // END------contact request related api-------
+
+
 
     // START------favorite related api-------
     // get all favorite data
-    app.get("/favorite", async (req, res) => {
-      const result = await favoriteCollection.find().toArray();
+    app.get("/favorites", async (req, res) => {
+      const email = req.query.email;
+      const query = {email : email};
+      const result = await favoriteCollection.find(query).toArray();
       res.send(result);
     });
-
     // post by client side bioInfo
     app.post("/favorites", async (req, res) => {
       const bioInfo = req.body;
       const result = await favoriteCollection.insertOne(bioInfo);
       res.send(result);
     });
+    // delete favorites bio
+    app.delete('/favorites/:id',async(req,res)=>{
+      const id = req.params.id;
+      const query = { _id : new ObjectId(id)};
+      const result = await favoriteCollection.deleteOne(query);
+      res.send(result);
+    })
     // END------favorite related api-------
+
+
+
 
     // START------users related api-------
     // insert user from client side
@@ -159,6 +194,19 @@ async function run() {
     // END------users related api-------
 
 
+
+
+    // START------premium bio related api-------
+    app.post('/premium-bio',async(req,res)=>{
+      const premiumBio = req.body;
+      const result = await premiumBiodataCollection.insertOne(premiumBio);
+      res.send(result)
+    })
+
+    // END------premium bio related api-------
+
+
+
     // START------Payment related api--------
     // create payment intent
      app.post("/create-payment-intent", async (req, res) => {
@@ -172,13 +220,6 @@ async function run() {
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
-    });
-
-    // save payment information
-    app.post("/payments-info", async (req, res) => {
-      const paymentInfo = req.body;
-      const result = await requestCollection.insertOne(paymentInfo);
-      res.send(result)
     });
     // END------Payment related api--------
 
