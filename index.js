@@ -4,7 +4,7 @@ const cors = require("cors");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SK_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const jwt = require("jsonwebtoken");
+// const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
 // middlewares
@@ -31,7 +31,7 @@ async function run() {
     // START------biodata related api-------
     // get bio by sort
     app.get("/limit-biodatas", async (req, res) => {
-      const result = await bioDataCollection.find().sort({ age: 1 }).toArray();
+      const result = await bioDataCollection.find().limit(6).sort({ age: 1 }).toArray();
       res.send(result);
     });
     // get all bio
@@ -73,6 +73,39 @@ async function run() {
       const result = await bioDataCollection.insertOne(newBiodata);
       res.send(result);
     });
+
+    // update bio
+    app.put('/biodatas',async(req,res)=>{
+      const updateBio = req.body;
+      const userEmail = req.query.email;
+      const filter = {contact_email : userEmail};
+      const options = {upsert:true};
+      const updatedDoc = {
+        $set : {
+          age:updateBio.age,
+          biodata_type:updateBio.biodata_type,
+          contact_email:updateBio.contact_email,
+          contact_number:updateBio.contact_number,
+          date_of_birth:updateBio.date_of_birth,
+          expected_partner_age:updateBio.expected_partner_age,
+          expected_partner_height:updateBio.expected_partner_height,
+          expected_partner_weight:updateBio.expected_partner_weight,
+          fathers_name:updateBio.fathers_name,
+          height:updateBio.height,
+          mothers_name:updateBio.mothers_name,
+          name:updateBio.name,
+          occupation:updateBio.occupation,
+          permanent_division_name:updateBio.permanent_division_name,
+          premium_status:updateBio?.premium_status,
+          present_division_name:updateBio.present_division_name,
+          profile_image:updateBio.profile_image,
+          race:updateBio.race,
+          weight:updateBio.weight,
+        }
+      }
+      const result = await bioDataCollection.updateOne(filter,updatedDoc,options);
+      res.send(result);
+    })
     // END------biodata related api-------
 
     // START------successStory related api-------
@@ -136,7 +169,6 @@ async function run() {
         currency: "usd",
         payment_method_types: ["card"],
       });
-
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
@@ -148,7 +180,7 @@ async function run() {
       const result = await requestCollection.insertOne(paymentInfo);
       res.send(result)
     });
-
+    // END------Payment related api--------
 
 
 
