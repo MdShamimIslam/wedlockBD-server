@@ -121,7 +121,6 @@ async function run() {
 
 
 
-
     // START------successStory related api-------
     
     app.get("/successStories", async (req, res) => {
@@ -283,6 +282,30 @@ async function run() {
     // END------Payment related api--------
 
 
+    // START------admin stats api--------
+    app.get('/admin-stats',async(req,res)=>{
+      const totalBiodata = await bioDataCollection.estimatedDocumentCount();
+      const maleBiodata = await bioDataCollection.countDocuments({ biodata_type: 'Male' });
+      const femaleBiodata = await bioDataCollection.countDocuments({ biodata_type: 'Female' });
+      const premiumBiodata = await bioDataCollection.countDocuments({ premium_status: true });
+      const totalRequest = await requestCollection.find().toArray();
+      const totalRevenue = totalRequest.reduce((sum,item)=>sum+item.price,0);
+
+      res.send({totalBiodata,maleBiodata,femaleBiodata,premiumBiodata,totalRevenue})
+    })
+    // admin stats of pie chart
+    app.get('/admin-pieChart-stats',async(req,res)=>{
+      const total_Biodata = await requestCollection.estimatedDocumentCount();
+      const male = await requestCollection.countDocuments({ selfBiodata_type: 'Male' });
+      const female = await requestCollection.countDocuments({ selfBiodata_type: 'Female' });
+      const premium = await requestCollection.countDocuments({ selfBiodata_status: true });
+      const totalRequest = await requestCollection.find().toArray();
+      const revenue = totalRequest.reduce((sum,item)=>sum+item.price,0);
+
+      res.send({total_Biodata,male,female,premium,revenue})
+    })
+
+    // END------admin stats api--------
 
 
 
