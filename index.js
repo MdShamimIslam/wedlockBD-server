@@ -4,7 +4,7 @@ const cors = require("cors");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SK_KEY);
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-// const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
 // middlewares
@@ -30,11 +30,50 @@ async function run() {
     const premiumBiodataCollection = client.db("wedlockBD").collection("premiumBiodatas");
 
 
+
+    // START------jwt related api-------
+    // verify token
+    const verifyToken = (req, res, next) => {
+      const authHeaders = req.headers.authorization;
+      if (!authHeaders) {
+        return res.status(401).send({ message: "Unauthorized access" });
+      }
+      const token = authHeaders.split(" ")[1];
+      jwt.verify(token, process.env.SECRET_TOKEN, (error, decoded) => {
+        if (error) {
+          return res.status(401).send({ message: "Unauthorized access" });
+        }
+        req.decoded = decoded;
+        next();
+      });
+    };
+
+    // verify admin
+    const verifyAdmin = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await userCollection.findOne(query);
+      const isAdmin = user?.role === "Admin";
+      if (!isAdmin) {
+        return res.status(403).send({ message: "Forbidden access" });
+      }
+      next();
+    };
+    // create token
+    app.post("/jwt", (req, res) => {
+      const userEmail = req.body;
+      const token = jwt.sign(userEmail, process.env.SECRET_TOKEN, {
+        expiresIn: "1d",
+      });
+      res.send({ token });
+    });
+   // END------jwt related api-------
+
     // START------biodata related api-------
-    // get bio by sort
-    app.get("/limit-biodatas", async (req, res) => {
-      const result = await bioDataCollection.find().limit(6).sort({ age: 1 }).toArray();
-      res.send(result);
+    // get limit bio
+    app.get("/limit-biodatas", async (_req, res) => {
+      const result = await bioDataCollection.find({ premium_status: true }).limit(6).sort({ age: 1 }).toArray();
+        res.send(result);
     });
     // get all bio
     app.get("/biodatas", async (req, res) => {
@@ -54,9 +93,9 @@ async function run() {
       res.send(result);
     });
     // get bio by user email 
-    app.get('/v1/biodatas',async(req,res)=>{
+    app.get('/v1/biodatas', async (req, res) => {
       const userEmail = req.query.email;
-      const query = {contact_email:userEmail};
+      const query = { contact_email: userEmail };
       const result = await bioDataCollection.findOne(query);
       res.send(result);
     })
@@ -76,67 +115,71 @@ async function run() {
       res.send(result);
     });
     // update bio
-    app.put('/biodatas',async(req,res)=>{
+    app.put('/biodatas', async (req, res) => {
       const updateBio = req.body;
       const userEmail = req.query.email;
-      const filter = {contact_email : userEmail};
-      const options = {upsert:true};
+      const filter = { contact_email: userEmail };
+      const options = { upsert: true };
       const updatedDoc = {
-        $set : {
-          age:updateBio.age,
-          biodata_type:updateBio.biodata_type,
-          contact_number:updateBio.contact_number,
-          date_of_birth:updateBio.date_of_birth,
-          expected_partner_age:updateBio.expected_partner_age,
-          expected_partner_height:updateBio.expected_partner_height,
-          expected_partner_weight:updateBio.expected_partner_weight,
-          fathers_name:updateBio.fathers_name,
-          height:updateBio.height,
-          mothers_name:updateBio.mothers_name,
-          name:updateBio.name,
-          occupation:updateBio.occupation,
-          permanent_division_name:updateBio.permanent_division_name,
-          present_division_name:updateBio.present_division_name,
-          profile_image:updateBio.profile_image,
-          race:updateBio.race,
-          weight:updateBio.weight,
+        $set: {
+          age: updateBio.age,
+          biodata_type: updateBio.biodata_type,
+          contact_number: updateBio.contact_number,
+          date_of_birth: updateBio.date_of_birth,
+          expected_partner_age: updateBio.expected_partner_age,
+          expected_partner_height: updateBio.expected_partner_height,
+          expected_partner_weight: updateBio.expected_partner_weight,
+          fathers_name: updateBio.fathers_name,
+          height: updateBio.height,
+          mothers_name: updateBio.mothers_name,
+          name: updateBio.name,
+          occupation: updateBio.occupation,
+          permanent_division_name: updateBio.permanent_division_name,
+          present_division_name: updateBio.present_division_name,
+          profile_image: updateBio.profile_image,
+          race: updateBio.race,
+          weight: updateBio.weight,
         }
       }
-      const result = await bioDataCollection.updateOne(filter,updatedDoc,options);
+      const result = await bioDataCollection.updateOne(filter, updatedDoc, options);
       res.send(result);
     })
     // make biodata premium_status(true) by params email to user
-    app.patch('/biodatas-premium/:email',async(req,res)=>{
+    app.patch('/biodatas-premium/:email', async (req, res) => {
       const email = req.params.email;
-      const filter = { contact_email : email};
+      const filter = { contact_email: email };
       const updatedDoc = {
-        $set : {
-          premium_status : true
+        $set: {
+          premium_status: true
         }
       }
-      const result = await bioDataCollection.updateOne(filter,updatedDoc);
+      const result = await bioDataCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
     // END------biodata related api-------
 
 
-
     // START------successStory related api-------
-    
-    app.get("/successStories", async (req, res) => {
+    // get all success story
+    app.get("/successStories", async (_req, res) => {
       const result = await successStoryCollection.find().toArray();
       res.send(result);
     });
+
+    // add success story
+    app.post("/successStories", async (req, res) => {
+      const successStory = req.body;
+      const result = await successStoryCollection.insertOne(successStory);
+      res.send(result);
+    })
     // END------successStory related api-------
 
 
-
     // START------contact request related api-------
-
     // get request contact info (user email get and only get)
     app.get("/contact-request", async (req, res) => {
       const userEmail = req.query.email;
-      const  query = {selfEmail : userEmail}
+      const query = { selfEmail: userEmail }
       const result = await requestCollection.find(query).toArray();
       res.send(result);
     });
@@ -147,34 +190,32 @@ async function run() {
       res.send(result)
     });
     // delete contact request
-    app.delete('/contact-request/:id',async(req,res)=>{
+    app.delete('/contact-request/:id', async (req, res) => {
       const id = req.params.id;
-      const query = { _id : new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await requestCollection.deleteOne(query);
       res.send(result);
     })
     //  contact request status updated
-    app.patch('/contact-request/:id',async(req,res)=>{
+    app.patch('/contact-request/:id', async (req, res) => {
       const id = req.params.id;
-      const filter = { _id : new ObjectId(id)};
+      const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
-        $set : {
-          status : 'Approved'
+        $set: {
+          status: 'Approved'
         }
       }
-      const result = await requestCollection.updateOne(filter,updatedDoc);
+      const result = await requestCollection.updateOne(filter, updatedDoc);
       res.send(result);
     })
-
     // END------contact request related api-------
-
 
 
     // START------favorite related api-------
     // get all favorite data
     app.get("/favorites", async (req, res) => {
       const email = req.query.email;
-      const query = {email : email};
+      const query = { email: email };
       const result = await favoriteCollection.find(query).toArray();
       res.send(result);
     });
@@ -185,89 +226,93 @@ async function run() {
       res.send(result);
     });
     // delete favorites bio
-    app.delete('/favorites/:id',async(req,res)=>{
+    app.delete('/favorites/:id', async (req, res) => {
       const id = req.params.id;
-      const query = { _id : new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await favoriteCollection.deleteOne(query);
       res.send(result);
     })
     // END------favorite related api-------
 
 
-
-
     // START------users related api-------
+    // check admin (true or false)
+    app.get("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+
+      const user = await userCollection.findOne({ email });
+      if (user?.role === "Admin") {
+        return res.send({ admin: true });
+      }
+      res.send({ admin: false });
+    });
     // insert user from client side
-    app.post('/users',async(req,res)=>{
-    const user = req.body;
-    const query = {email:user?.email};
-    const existingUser = await userCollection.findOne(query);
-    if(existingUser){
-      return res.send({ message: "Already exist the email",insertedId: null,})
-    }
-    const result = await userCollection.insertOne(user);
-    res.send(result);
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const query = { email: user?.email };
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: "Already exist the email", insertedId: null, })
+      }
+      const result = await userCollection.insertOne(user);
+      res.send(result);
     })
     // get all users by email from db
-    app.get('/users',async(req,res)=>{
+    app.get('/users', async (req, res) => {
       const result = await userCollection.find().toArray();
       res.send(result);
     })
     // delete user
-    app.delete('/users/:id',async(req,res)=>{
+    app.delete('/users/:id', async (req, res) => {
       const id = req.params.id;
-      const query = { _id : new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await userCollection.deleteOne(query);
       res.send(result);
     })
     // delete user
-    app.put('/users/:id',async(req,res)=>{
+    app.put('/users/:id', async (req, res) => {
       const userInfo = req.body;
       const id = req.params.id;
-      const filter = { _id : new ObjectId(id)};
-      const options = { upsert : true };
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
       const updatedDoc = {
-        $set : {
-          role :userInfo.role
+        $set: {
+          role: userInfo.role
         }
       }
-      const result = await userCollection.updateOne(filter,updatedDoc,options);
+      const result = await userCollection.updateOne(filter, updatedDoc, options);
       res.send(result);
     })
     // END------users related api-------
 
 
-
-
     // START------premium bio related api-------
     // save premium info from client side
-    app.post('/premium-bio',async(req,res)=>{
+    app.post('/premium-bio', async (req, res) => {
       const premiumBio = req.body;
       const result = await premiumBiodataCollection.insertOne(premiumBio);
       res.send(result)
     })
     // get premium bio by email
-    app.get('/premium-bio',async(req,res)=>{
+    app.get('/premium-bio', async (req, res) => {
       const email = req.query.email;
-      const query = {contact_email:email};
+      const query = { contact_email: email };
       const result = await premiumBiodataCollection.find(query).toArray();
       res.send(result);
     })
     // delete premium bio
-    app.delete('/premium-bio/:id',async(req,res)=>{
+    app.delete('/premium-bio/:id', async (req, res) => {
       const id = req.params.id;
-      const query = { _id : new ObjectId(id)};
+      const query = { _id: new ObjectId(id) };
       const result = await premiumBiodataCollection.deleteOne(query);
       res.send(result);
     })
-
     // END------premium bio related api-------
-
 
 
     // START------Payment related api--------
     // create payment intent
-     app.post("/create-payment-intent", async (req, res) => {
+    app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
       const amount = parseInt(price * 100);
       const paymentIntent = await stripe.paymentIntents.create({
@@ -282,49 +327,55 @@ async function run() {
     // END------Payment related api--------
 
 
+    // START------user stats api--------
+    app.get('/user-stats', async (_req, res) => {
+      const totalBiodatas = await bioDataCollection.estimatedDocumentCount();
+      const successStories = await successStoryCollection.estimatedDocumentCount();
+      const maleBiodatas = await bioDataCollection.countDocuments({ biodata_type: 'Male' });
+      const femaleBiodatas = await bioDataCollection.countDocuments({ biodata_type: 'Female' });
+
+      res.send({ totalBiodatas, successStories, maleBiodatas, femaleBiodatas })  
+    })
+    // END------user stats api--------
+
+
     // START------admin stats api--------
-    app.get('/admin-stats',async(req,res)=>{
+    app.get('/admin-stats', async (req, res) => {
       const totalBiodata = await bioDataCollection.estimatedDocumentCount();
       const maleBiodata = await bioDataCollection.countDocuments({ biodata_type: 'Male' });
       const femaleBiodata = await bioDataCollection.countDocuments({ biodata_type: 'Female' });
       const premiumBiodata = await bioDataCollection.countDocuments({ premium_status: true });
       const totalRequest = await requestCollection.find().toArray();
-      const totalRevenue = totalRequest.reduce((sum,item)=>sum+item.price,0);
+      const totalRevenue = totalRequest.reduce((sum, item) => sum + item.price, 0);
 
-      res.send({totalBiodata,maleBiodata,femaleBiodata,premiumBiodata,totalRevenue})
+      res.send({ totalBiodata, maleBiodata, femaleBiodata, premiumBiodata, totalRevenue })  
     })
     // admin stats of pie chart
-    app.get('/admin-pieChart-stats',async(req,res)=>{
+    app.get('/admin-pieChart-stats', async (req, res) => {
       const total_Biodata = await requestCollection.estimatedDocumentCount();
       const male = await requestCollection.countDocuments({ selfBiodata_type: 'Male' });
       const female = await requestCollection.countDocuments({ selfBiodata_type: 'Female' });
       const premium = await requestCollection.countDocuments({ selfBiodata_status: true });
       const totalRequest = await requestCollection.find().toArray();
-      const revenue = totalRequest.reduce((sum,item)=>sum+item.price,0);
+      const revenue = totalRequest.reduce((sum, item) => sum + item.price, 0);
 
-      res.send({total_Biodata,male,female,premium,revenue})
+      res.send({ total_Biodata, male, female, premium, revenue })
     })
-
     // END------admin stats api--------
-
-
-
 
     await client.connect();
     await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    console.log("Pinged your deployment. You successfully connected to MongoDB!" );
   } finally {
     // await client.close();
   }
 }
 run().catch(console.dir);
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.send("WedlockBD server is running...");
 });
 
-app.listen(port, (req, res) => {
+app.listen(port, () => {
   console.log(`WedlockBD server is running on port : ${port}`);
 });
