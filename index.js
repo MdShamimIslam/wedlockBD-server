@@ -30,7 +30,6 @@ async function run() {
     const premiumBiodataCollection = client.db("wedlockBD").collection("premiumBiodatas");
 
 
-
     // START------jwt related api-------
     // verify token
     const verifyToken = (req, res, next) => {
@@ -75,17 +74,68 @@ async function run() {
       const result = await bioDataCollection.find({ premium_status: true }).limit(6).sort({ age: 1 }).toArray();
         res.send(result);
     });
-    // get all bio
+    // get all biodatas with filter, search, sort, pagination
     app.get("/biodatas", async (req, res) => {
-      const result = await bioDataCollection.find().toArray();
-      res.send(result);
+      const { search, division, occupation, biodataType, minAge, maxAge, sortBy, page = 1, limit = 10 } = req.query;
+
+      let query = {};
+
+      // search (name, occupation, division)
+      if (search) {
+        query.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { occupation: { $regex: search, $options: "i" } },
+          { present_division_name: { $regex: search, $options: "i" } }
+        ];
+      }
+
+      // filter by division
+      if (division) {
+        query.present_division_name = division;
+      }
+
+      // filter by occupation
+      if (occupation) {
+        query.occupation = occupation;
+      }
+
+      // filter by biodata type
+      if (biodataType) {
+        query.biodata_type = biodataType;
+      }
+
+      // filter by age
+      if (minAge && maxAge) {
+        query.age = { $gte: parseInt(minAge), $lte: parseInt(maxAge) };
+      }
+
+      let cursor = bioDataCollection.find(query);
+
+      // sort
+      if (sortBy === "ageAsc") cursor = cursor.sort({ age: 1 });
+      if (sortBy === "ageDesc") cursor = cursor.sort({ age: -1 });
+
+      // pagination
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const result = await cursor.skip(skip).limit(parseInt(limit)).toArray();
+
+      // total count
+      const total = await bioDataCollection.countDocuments(query);
+
+      res.send({
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        biodatas: result
+      });
     });
+
     // get gender based bio
     app.get("/gender-biodatas", async (req, res) => {
       const result = await bioDataCollection.find().toArray();
       res.send(result);
     });
-    // get bio for specific details bio
+    // get single biodata for specific id
     app.get("/biodatas/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
@@ -99,7 +149,7 @@ async function run() {
       const result = await bioDataCollection.findOne(query);
       res.send(result);
     })
-    // insert bio from client
+    // insert biodata
     app.post("/biodatas", async (req, res) => {
       const biodata = req.body;
       const latestBiodata = await bioDataCollection.findOne(
@@ -114,7 +164,7 @@ async function run() {
       const result = await bioDataCollection.insertOne(newBiodata);
       res.send(result);
     });
-    // update bio
+    // update biodata
     app.put('/biodatas', async (req, res) => {
       const updateBio = req.body;
       const userEmail = req.query.email;
@@ -144,7 +194,7 @@ async function run() {
       const result = await bioDataCollection.updateOne(filter, updatedDoc, options);
       res.send(result);
     })
-    // make biodata premium_status(true) by params email to user
+    // make biodata premium by user email
     app.patch('/biodatas-premium/:email', async (req, res) => {
       const email = req.params.email;
       const filter = { contact_email: email };
