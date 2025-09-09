@@ -22,12 +22,17 @@ const client = new MongoClient(process.env.DB_URI, {
 async function run() {
   try {
     // collection
-    const bioDataCollection = client.db("wedlockBD").collection("biodatas");
-    const successStoryCollection = client.db("wedlockBD").collection("successStories");
-    const requestCollection = client.db("wedlockBD").collection("requests");
-    const favoriteCollection = client.db("wedlockBD").collection("favorites");
-    const userCollection = client.db("wedlockBD").collection("users");
-    const premiumBiodataCollection = client.db("wedlockBD").collection("premiumBiodatas");
+    const db = client.db("wedlockBD");
+    const bioDataCollection = db.collection("biodatas");
+    const successStoryCollection = db.collection("successStories");
+    const requestCollection = db.collection("requests");
+    const favoriteCollection = db.collection("favorites");
+    const userCollection = db.collection("users");
+    const premiumBiodataCollection = db.collection("premiumBiodatas");
+
+
+    
+    
 
 
     // START------jwt related api-------
@@ -67,6 +72,61 @@ async function run() {
       res.send({ token });
     });
    // END------jwt related api-------
+
+
+   app.post("/checkout-session/:biodataId", verifyToken, async (req, res) => {
+    try {
+      const biodataId = req.params.biodataId;
+      const userEmail = req.decoded.email;
+  
+      const biodata = await bioDataCollection.findOne({ biodata_id: parseInt(biodataId) });
+      
+      const user = await userCollection.findOne({ email: userEmail });
+  
+      if (!biodata) return res.status(404).json({ success: false, message: "Profile not found" });
+  
+      const price = 5;
+  
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "payment",
+        success_url: `${process.env.CLIENT_SITE_URL}/checkout-success`,
+        cancel_url: `${req.protocol}://${req.get("host")}/biodatas/${biodataId}`,
+        customer_email: user.email,
+        client_reference_id: biodataId,
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              unit_amount: price * 100,
+              product_data: {
+                name: biodata.name,
+                description: biodata.occupation,
+                images: [biodata.profile_image],
+              },
+            },
+            quantity: 1,
+          },
+        ],
+      });
+  
+      // Save payment attempt
+      await premiumBiodataCollection.insertOne({
+        biodataId: biodata._id,
+        userEmail: user.email,
+        price,
+        sessionId: session.id,
+        status: "pending",
+        createdAt: new Date(),
+      });
+  
+      res.status(200).json({ success: true, session });
+  
+    } catch (err) {
+      console.error("Stripe checkout-session error:", err);
+      res.status(500).json({ success: false, message: "Failed to create checkout session" });
+    }
+  });
 
     // START------biodata related api-------
     // get limit bio
@@ -434,7 +494,6 @@ async function run() {
       res.send({ totalBiodatas, successStories, maleBiodatas, femaleBiodatas })  
     })
     // END------user stats api--------
-
 
     // START------admin stats api--------
     app.get('/admin-stats', async (req, res) => {
