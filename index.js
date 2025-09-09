@@ -76,7 +76,7 @@ async function run() {
     });
     // get all biodatas with filter, search, sort, pagination
     app.get("/biodatas", async (req, res) => {
-      const { search, division, occupation, biodataType, minAge, maxAge, sortBy, page = 1, limit = 10 } = req.query;
+      const { search, division, occupation, biodataType, minAge, maxAge, sortBy, page = 1, limit } = req.query;
 
       let query = {};
 
@@ -123,10 +123,11 @@ async function run() {
       const total = await bioDataCollection.countDocuments(query);
 
       res.send({
+        biodatas: result,
         total,
+        totalPages: Math.ceil(total / parseInt(limit)),
         page: parseInt(page),
-        limit: parseInt(limit),
-        biodatas: result
+        limit: limit ? parseInt(limit) : null,
       });
     });
 
@@ -135,20 +136,39 @@ async function run() {
       const result = await bioDataCollection.find().toArray();
       res.send(result);
     });
+
+    app.get('/biodatas/by-email', async (req, res) => {
+      try {
+        const userEmail = req.query.email;
+        if (!userEmail) {
+          return res.status(400).send({ error: "Email is required" });
+        }
+    
+        const query = { contact_email: userEmail };
+        const result = await bioDataCollection.findOne(query);
+    
+        if (!result) {
+          return res.status(404).send({ error: "Biodata not found" });
+        }
+    
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ error: "Server error" });
+      }
+    });
+
     // get single biodata for specific id
     app.get("/biodatas/:id", async (req, res) => {
       const id = req.params.id;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid IDss" });
+      }
       const query = { _id: new ObjectId(id) };
       const result = await bioDataCollection.findOne(query);
       res.send(result);
     });
-    // get bio by user email 
-    app.get('/v1/biodatas', async (req, res) => {
-      const userEmail = req.query.email;
-      const query = { contact_email: userEmail };
-      const result = await bioDataCollection.findOne(query);
-      res.send(result);
-    })
+
+    
     // insert biodata
     app.post("/biodatas", async (req, res) => {
       const biodata = req.body;
@@ -242,6 +262,9 @@ async function run() {
     // delete contact request
     app.delete('/contact-request/:id', async (req, res) => {
       const id = req.params.id;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid ID" });
+      }
       const query = { _id: new ObjectId(id) };
       const result = await requestCollection.deleteOne(query);
       res.send(result);
@@ -249,6 +272,9 @@ async function run() {
     //  contact request status updated
     app.patch('/contact-request/:id', async (req, res) => {
       const id = req.params.id;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid ID" });
+      }
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
         $set: {
@@ -278,6 +304,9 @@ async function run() {
     // delete favorites bio
     app.delete('/favorites/:id', async (req, res) => {
       const id = req.params.id;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid ID" });
+      }
       const query = { _id: new ObjectId(id) };
       const result = await favoriteCollection.deleteOne(query);
       res.send(result);
@@ -315,6 +344,9 @@ async function run() {
     // delete user
     app.delete('/users/:id', async (req, res) => {
       const id = req.params.id;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid ID" });
+      }
       const query = { _id: new ObjectId(id) };
       const result = await userCollection.deleteOne(query);
       res.send(result);
@@ -323,6 +355,9 @@ async function run() {
     app.put('/users/:id', async (req, res) => {
       const userInfo = req.body;
       const id = req.params.id;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid ID" });
+      }
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updatedDoc = {
@@ -353,6 +388,9 @@ async function run() {
     // delete premium bio
     app.delete('/premium-bio/:id', async (req, res) => {
       const id = req.params.id;
+      if (!ObjectId.isValid(id)) {
+        return res.status(400).send({ error: "Invalid ID" });
+      }
       const query = { _id: new ObjectId(id) };
       const result = await premiumBiodataCollection.deleteOne(query);
       res.send(result);
