@@ -208,7 +208,7 @@ async function run() {
         const result = await bioDataCollection.findOne(query);
     
         if (!result) {
-          return res.status(404).send({ error: "Biodata not found" });
+          return res.send({});
         }
     
         res.send(result);
