@@ -31,9 +31,6 @@ async function run() {
     const premiumBiodataCollection = db.collection("premiumBiodatas");
 
 
-    
-    
-
 
     // START------jwt related api-------
     // verify token
@@ -131,16 +128,16 @@ async function run() {
     // START------biodata related api-------
     // get limit bio
     app.get("/limit-biodatas", async (_req, res) => {
-      const result = await bioDataCollection.find({ premium_status: true }).limit(6).sort({ age: 1 }).toArray();
+      const result = await bioDataCollection.find({ premium_status: true }).limit(6).sort({ date_of_birth: 1 }).toArray();
         res.send(result);
     });
+
     // get all biodatas with filter, search, sort, pagination
     app.get("/biodatas", async (req, res) => {
       const { search, division, occupation, biodataType, minAge, maxAge, sortBy, page = 1, limit } = req.query;
-
+    
       let query = {};
-
-      // search (name, occupation, division)
+    
       if (search) {
         query.$or = [
           { name: { $regex: search, $options: "i" } },
@@ -148,46 +145,68 @@ async function run() {
           { present_division_name: { $regex: search, $options: "i" } }
         ];
       }
-
-      // filter by division
+    
       if (division) {
         query.present_division_name = division;
       }
-
-      // filter by occupation
+    
       if (occupation) {
         query.occupation = occupation;
       }
-
-      // filter by biodata type
+    
       if (biodataType) {
         query.biodata_type = biodataType;
       }
-
-      // filter by age
+    
       if (minAge && maxAge) {
-        query.age = { $gte: parseInt(minAge), $lte: parseInt(maxAge) };
+        const today = new Date();
+
+        const minBirthDate = new Date(
+          today.getFullYear() - parseInt(minAge),
+          today.getMonth(),
+          today.getDate()
+        ).toISOString().split("T")[0];
+    
+        const maxBirthDate = new Date(
+          today.getFullYear() - parseInt(maxAge) - 1,
+          today.getMonth(),
+          today.getDate()
+        ).toISOString().split("T")[0]; 
+    
+        query.date_of_birth = { $gte: maxBirthDate, $lte: minBirthDate };
       }
-
+    
       let cursor = bioDataCollection.find(query);
-
-      // sort
-      if (sortBy === "ageAsc") cursor = cursor.sort({ age: 1 });
-      if (sortBy === "ageDesc") cursor = cursor.sort({ age: -1 });
-
-      // pagination
+    
+      if (sortBy === "ageAsc") {
+        cursor = cursor.sort({ date_of_birth: -1 });
+      }
+      if (sortBy === "ageDesc") {
+        cursor = cursor.sort({ date_of_birth: 1 });
+      }
+    
       const skip = (parseInt(page) - 1) * parseInt(limit);
       const result = await cursor.skip(skip).limit(parseInt(limit)).toArray();
-
-      // total count
+    
+      const today = new Date();
+      result.forEach(doc => {
+        const birthDate = new Date(doc.date_of_birth);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        doc.age = age;
+      });
+    
       const total = await bioDataCollection.countDocuments(query);
-
+    
       res.send({
         biodatas: result,
         total,
         totalPages: Math.ceil(total / parseInt(limit)),
         page: parseInt(page),
-        limit: limit ? parseInt(limit) : null,
+        limit: parseInt(limit),
       });
     });
 
@@ -227,11 +246,16 @@ async function run() {
       const result = await bioDataCollection.findOne(query);
       res.send(result);
     });
-
     
     // insert biodata
     app.post("/biodatas", async (req, res) => {
-      const biodata = req.body;
+      const biodata = req?.body;
+      const existing = await bioDataCollection.findOne({ contact_email: biodata.contact_email });
+
+      if (existing) {
+        return res.status(400).send({ message: "Biodata already exists!" });
+      }
+
       const latestBiodata = await bioDataCollection.findOne(
         {},
         { sort: { biodata_id: -1 } }
@@ -420,7 +444,7 @@ async function run() {
       const result = await userCollection.deleteOne(query);
       res.send(result);
     })
-    // delete user
+    // update user
     app.put('/users/:id', async (req, res) => {
       const userInfo = req.body;
       const id = req.params.id;
@@ -465,24 +489,6 @@ async function run() {
       res.send(result);
     })
     // END------premium bio related api-------
-
-
-    // START------Payment related api--------
-    // create payment intent
-    app.post("/create-payment-intent", async (req, res) => {
-      const { price } = req.body;
-      const amount = parseInt(price * 100);
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount,
-        currency: "usd",
-        payment_method_types: ["card"],
-      });
-      res.send({
-        clientSecret: paymentIntent.client_secret,
-      });
-    });
-    // END------Payment related api--------
-
 
     // START------user stats api--------
     app.get('/user-stats', async (_req, res) => {
