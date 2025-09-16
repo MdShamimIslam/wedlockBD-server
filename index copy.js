@@ -1,12 +1,10 @@
-import express from "express";
-import cors from "cors";
-import 'dotenv/config';
-import stripePackage from "stripe";
-import { MongoClient, ServerApiVersion, ObjectId } from "mongodb";
-import jwt from "jsonwebtoken";
-
+const express = require("express");
 const app = express();
-const stripe = stripePackage(process.env.STRIPE_SK_KEY);
+const cors = require("cors");
+require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SK_KEY);
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
 // middlewares
