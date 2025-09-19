@@ -20,7 +20,7 @@ export const getLimitedBiodatas = async (_req, res) => {
 export const getBiodatas = async (req, res) => {
   try {
     const { bioDataCollection } = getCollections();
-    const { search, division, occupation, biodataType, minAge, maxAge, sortBy, page = 1, limit = 10 } = req.query;
+    const { search, division, occupation, biodataType, minAge, maxAge, sortBy, page = 1, limit } = req.query;
 
     let query = {};
 

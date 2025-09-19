@@ -373,20 +373,20 @@ async function run() {
       res.send(result);
     });
     // post by client side bioInfo
-    app.post("/favorites", async (req, res) => {
-      const bioInfo = req.body;
+    // app.post("/favorites", async (req, res) => {
+    //   const bioInfo = req.body;
     
-      const exists = await favoriteCollection.findOne({
-        email: bioInfo.email,
-        biodata_id: bioInfo.biodata_id
-      });
+    //   const exists = await favoriteCollection.findOne({
+    //     email: bioInfo.email,
+    //     biodata_id: bioInfo.biodata_id
+    //   });
     
-      if (exists) {
-        return res.send({ insertedId: null }); 
-      }
-      const result = await favoriteCollection.insertOne(bioInfo);
-      res.send(result);
-    });
+    //   if (exists) {
+    //     return res.send({ insertedId: null }); 
+    //   }
+    //   const result = await favoriteCollection.insertOne(bioInfo);
+    //   res.send(result);
+    // });
     // delete favorites bio
     app.delete('/favorites/:id', async (req, res) => {
       const id = req.params.id;

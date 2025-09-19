@@ -4,13 +4,13 @@ import {
   addFavorite,
   deleteFavorite,
 } from "../controllers/favoriteController.js";
+import { verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-export default function favoritesRoutes() {
-  router.get("/", getFavorites);
-  router.post("/", addFavorite);
-  router.delete("/:id", deleteFavorite);
+router.get("/", verifyToken, getFavorites);
+router.post("/", verifyToken, addFavorite);
+router.delete("/:id", verifyToken, deleteFavorite);
 
-  return router;
-}
+export default router;
+

@@ -29,7 +29,7 @@ const startServer = async () => {
     app.use("/jwt", authRoutes);
     app.use("/favorites", favoriteRoutes);
     app.use("/payments", paymentRoutes);
-    app.use("/successStories", successStoryRoutes);
+    app.use("/success-stories", successStoryRoutes);
     app.use("/contact-request", contactRequestRoutes);
     app.use("/user-stats", userStatsRoutes);
     app.use("/admin-stats", adminStatsRoutes);

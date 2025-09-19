@@ -3,7 +3,7 @@ import stripePackage from "stripe";
 
 const stripe = stripePackage(process.env.STRIPE_SK_KEY);
 
-export const createCheckoutSession = async (req, res) => {
+export const contactCheckoutSession = async (req, res) => {
   try {
     const { bioDataCollection, userCollection, premiumBiodataCollection } = getCollections();
 
@@ -15,7 +15,7 @@ export const createCheckoutSession = async (req, res) => {
 
     if (!biodata) return res.status(404).json({ success: false, message: "Profile not found" });
 
-    const price = 5;
+    const price = 1;
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
