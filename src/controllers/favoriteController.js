@@ -38,10 +38,11 @@ export const deleteFavorite = async (req, res) => {
   try {
     const { favoriteCollection } = getCollections();
     const id = req.params.id;
+    
     if (!ObjectId.isValid(id)) {
       return res.status(400).send({ error: "Invalid ID" });
     }
-    const result = await favoriteCollection.deleteOne({ _id: new ObjectId(id) });
+    const result = await favoriteCollection.deleteOne({ _id: id });
     res.send(result);
   } catch (err) {
     res.status(500).send({ error: "Failed to delete favorite" });

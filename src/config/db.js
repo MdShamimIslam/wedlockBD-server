@@ -35,3 +35,6 @@ export const getCollections = () => {
   if (!db) throw new Error("DB not initialized. Call connectDB() first.");
   return collections;
 }
+
+
+
