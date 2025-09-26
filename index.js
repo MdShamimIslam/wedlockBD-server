@@ -12,6 +12,8 @@ import userStatsRoutes from "./src/routes/userStatsRoutes.js";
 import premiumBioRoutes from "./src/routes/premiumBioRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import biodataRoutes from "./src/routes/biodataRoutes.js";
+import profileViewRoutes from "./src/routes/profileViewRoutes.js";
+import overviewRoutes from "./src/routes/overviewRoutes.js";
 
 
 const app = express();
@@ -24,18 +26,19 @@ app.use(express.json());
 const startServer = async () => {
   try {
     await connectDB();
-    console.log("DB connected");
 
     app.use("/jwt", authRoutes);
-    app.use("/favorites", favoriteRoutes);
-    app.use("/payments", paymentRoutes);
-    app.use("/success-stories", successStoryRoutes);
-    app.use("/contact-request", contactRequestRoutes);
-    app.use("/user-stats", userStatsRoutes);
-    app.use("/admin-stats", adminStatsRoutes);
-    app.use("/premium-bio", premiumBioRoutes);
     app.use("/users", userRoutes);
     app.use("/biodatas", biodataRoutes);
+    app.use("/favorites", favoriteRoutes);
+    app.use("/contact-request", contactRequestRoutes);
+    app.use("/payments", paymentRoutes);
+    app.use("/user-stats", userStatsRoutes);
+    app.use("/premium-bio", premiumBioRoutes);
+    app.use("/success-stories", successStoryRoutes);
+    app.use("/profile-views", profileViewRoutes);
+    app.use("/overview", overviewRoutes);
+    app.use("/admin-stats", adminStatsRoutes);
 
     app.listen(port, () => {
       console.log(`Server running on port: ${port}`);

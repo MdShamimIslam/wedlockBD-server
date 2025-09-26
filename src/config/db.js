@@ -25,6 +25,7 @@ export const connectDB = async () => {
       favoriteCollection: db.collection("favorites"),
       userCollection: db.collection("users"),
       premiumBiodataCollection: db.collection("premiumBiodatas"),
+      profileViewCollection: db.collection("profileViews"),
     };
   }
   return collections;

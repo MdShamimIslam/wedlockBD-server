@@ -21,6 +21,7 @@ export const addContactRequest = async (req, res) => {
     const biodataId = req.params?.biodataId;
     const userEmail = req.decoded?.email;
     const biodata = await bioDataCollection.findOne({ biodata_id: parseInt(biodataId) });
+    const selfBioData = await bioDataCollection.findOne({ contact_email: userEmail });
     
     if (!biodata) return res.status(404).json({ success: false, message: "Profile not found" });
     
@@ -56,6 +57,7 @@ export const addContactRequest = async (req, res) => {
 
       await requestCollection.insertOne({
         selfEmail: userEmail,
+        selfName: selfBioData?.name,
         partnerBiodataId: biodata.biodata_id,
         partnerName: biodata?.name,
         partnerImg: biodata?.profile_image,

@@ -24,7 +24,7 @@ export const verifyAdmin = async (req, res, next) => {
     const decodedEmail = req.decoded.email;
     const user = await userCollection.findOne({ email: decodedEmail });
 
-    if (!user || user.role !== "Admin") {
+    if (!user || user.role !== "admin") {
       return res.status(403).send({ message: "Forbidden access" });
     }
 

@@ -8,7 +8,7 @@ export const checkAdmin = async (req, res) => {
     const email = req.params.email;
 
     const user = await userCollection.findOne({ email });
-    if (user?.role === "Admin") {
+    if (user?.role === "admin") {
       return res.send({ admin: true });
     }
     res.send({ admin: false });
