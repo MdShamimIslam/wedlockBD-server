@@ -4,10 +4,8 @@ import { verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// get all success stories
+// only logged-in user routes
 router.get("/", getSuccessStories);
-
-// add a new success story
 router.post("/", verifyToken, addSuccessStory);
 
 export default router;

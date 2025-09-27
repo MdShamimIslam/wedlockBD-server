@@ -1,9 +1,9 @@
 import express from "express";
-import { contactCheckoutSession } from "../controllers/paymentController.js";
+import { makePremium } from "../controllers/paymentController.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/make-premium/:biodataId", verifyToken, contactCheckoutSession);
+router.patch("/make-premium/:biodataId", verifyToken, makePremium);
 
 export default router;

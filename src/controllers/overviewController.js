@@ -2,7 +2,6 @@ import { getCollections } from "../config/db.js";
 import { calculateAge } from "../utils/functions.js";
 
 
-
 export const getOverviewOfNormalUser = async (req, res) => {
   try {
     const { bioDataCollection, favoriteCollection, requestCollection, profileViewCollection } = getCollections();

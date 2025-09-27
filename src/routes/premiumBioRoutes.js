@@ -4,13 +4,9 @@ import { verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-// add premium bio → only logged-in user
+// only logged-in user routes
 router.post("/", verifyToken, addPremiumBio);
-
-// get premium bio by email → only logged-in user
 router.get("/", verifyToken, getPremiumBioByEmail);
-
-// delete premium bio → only logged-in user
 router.delete("/:id", verifyToken, deletePremiumBio);
 
 export default router;

@@ -32,12 +32,12 @@ const startServer = async () => {
     app.use("/biodatas", biodataRoutes);
     app.use("/favorites", favoriteRoutes);
     app.use("/contact-request", contactRequestRoutes);
-    app.use("/payments", paymentRoutes);
     app.use("/user-stats", userStatsRoutes);
-    app.use("/premium-bio", premiumBioRoutes);
     app.use("/success-stories", successStoryRoutes);
     app.use("/profile-views", profileViewRoutes);
     app.use("/overview", overviewRoutes);
+    app.use("/payments", paymentRoutes);
+    app.use("/premium-bio", premiumBioRoutes);
     app.use("/admin-stats", adminStatsRoutes);
 
     app.listen(port, () => {

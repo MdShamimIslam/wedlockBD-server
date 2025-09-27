@@ -98,7 +98,7 @@ export const updateContactRequestStatus = async (req, res) => {
     if (!ObjectId.isValid(id)) {
       return res.status(400).send({ error: "Invalid ID" });
     }
-    const updatedDoc = { $set: { status: "Approved" } };
+    const updatedDoc = { $set: { status: "approved" } };
     const result = await requestCollection.updateOne({ _id: new ObjectId(id) }, updatedDoc);
     res.send(result);
   } catch (err) {
