@@ -1,25 +1,92 @@
 import { ObjectId } from "mongodb";
 import { getCollections } from "../config/db.js";
 
+import stripePackage from "stripe";
+const stripe = stripePackage(process.env.STRIPE_SK_KEY);
+
 export const addPremiumBio = async (req, res) => {
   try {
-    const { premiumBiodataCollection } = getCollections();
-    const premiumBio = req.body;
-    const result = await premiumBiodataCollection.insertOne(premiumBio);
-    res.send(result);
+    const { bioDataCollection, premiumBiodataCollection } = getCollections();
+    const biodataId = req.params.biodataId;
+    const biodata = await bioDataCollection.findOne({ biodata_id: parseInt(biodataId) });
+
+    if (!biodata) return res.status(404).json({ success: false, message: "Profile not found" });
+
+    const price = 10;
+
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      mode: "payment",
+      success_url: `${process.env.CLIENT_SITE_URL}/checkout-success`,
+      cancel_url: `${req.protocol}://${req.get("host")}/biodatas/${biodataId}`,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: price * 100,
+            product_data: {
+              name: biodata.name,
+              description: biodata.occupation,
+              images: [biodata.profile_image],
+            },
+          },
+          quantity: 1,
+        },
+      ],
+    });
+
+    await premiumBiodataCollection.insertOne({
+      biodata_id: biodata.biodata_id,
+      contact_email: biodata.contact_email,
+      name: biodata.name,
+      payment_status: "pending",
+      payment_date: new Date()
+    })
+
+
+    res.status(200).json({ success: true, session });
+
   } catch (err) {
-    res.status(500).send({ error: "Failed to add premium bio" });
+    console.error("Stripe checkout-session error:", err);
+    res.status(500).json({ success: false, message: "Failed to create checkout session" });
   }
 };
 
-export const getPremiumBioByEmail = async (req, res) => {
+export const getPremiumBio = async (_req, res) => {
   try {
     const { premiumBiodataCollection } = getCollections();
-    const email = req.query.email;
-    const result = await premiumBiodataCollection.find({ contact_email: email }).toArray();
+    const result = await premiumBiodataCollection.find({}).toArray();
     res.send(result);
   } catch (err) {
     res.status(500).send({ error: "Failed to fetch premium bio" });
+  }
+};
+
+export const updatePremiumBioStatus = async (req, res) => {
+  try {
+    const { bioDataCollection, premiumBiodataCollection } = getCollections();
+    const biodataId = parseInt(req.params.biodataId);
+
+    const biodata = await premiumBiodataCollection.findOne({ biodata_id: biodataId });
+
+    if (!biodata) return res.status(404).json({ success: false, message: "Profile not found" });
+
+    const premiumUpdate = premiumBiodataCollection.updateOne(
+      { biodata_id: biodataId },
+      { $set: { payment_status: "approved" } }
+    );
+
+    const mainBioUpdate = bioDataCollection.updateOne(
+      { biodata_id: biodataId },
+      { $set: { premium_status: true } }
+    );
+
+    const [premiumResult, mainResult] = await Promise.all([premiumUpdate, mainBioUpdate]);
+
+    res.status(200).json({ success: true, message: "Premium biodata approved successfully!", premiumResult, mainResult });
+  }
+  catch (err) {
+    res.status(500).json({ success: false, error: "Failed to update premium bio status" });
   }
 };
 
@@ -27,6 +94,7 @@ export const deletePremiumBio = async (req, res) => {
   try {
     const { premiumBiodataCollection } = getCollections();
     const id = req.params.id;
+
     if (!ObjectId.isValid(id)) {
       return res.status(400).send({ error: "Invalid ID" });
     }

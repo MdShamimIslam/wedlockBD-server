@@ -4,7 +4,6 @@ import 'dotenv/config';
 import { connectDB } from "./src/config/db.js";
 import authRoutes from "./src/routes/authRoutes.js";
 import favoriteRoutes from "./src/routes/favoriteRoutes.js";
-import paymentRoutes from "./src/routes/paymentRoutes.js";
 import successStoryRoutes from "./src/routes/successStoryRoutes.js";
 import contactRequestRoutes from "./src/routes/contactRequestRoutes.js";
 import adminStatsRoutes from "./src/routes/adminStatsRoutes.js";
@@ -36,7 +35,6 @@ const startServer = async () => {
     app.use("/success-stories", successStoryRoutes);
     app.use("/profile-views", profileViewRoutes);
     app.use("/overview", overviewRoutes);
-    app.use("/payments", paymentRoutes);
     app.use("/premium-bio", premiumBioRoutes);
     app.use("/admin-stats", adminStatsRoutes);
 
