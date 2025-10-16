@@ -9,8 +9,11 @@ export const addPremiumBio = async (req, res) => {
     const { bioDataCollection, premiumBiodataCollection } = getCollections();
     const biodataId = req.params.biodataId;
     const biodata = await bioDataCollection.findOne({ biodata_id: parseInt(biodataId) });
+    const hasPremiumBio = await premiumBiodataCollection.findOne({ biodata_id: parseInt(biodataId) });
 
     if (!biodata) return res.status(404).json({ success: false, message: "Profile not found" });
+
+    if (hasPremiumBio) return res.status(400).json({ success: false, message: "Already requested" });
 
     const price = 10;
 
@@ -42,7 +45,6 @@ export const addPremiumBio = async (req, res) => {
       payment_status: "pending",
       payment_date: new Date()
     })
-
 
     res.status(200).json({ success: true, session });
 

@@ -46,22 +46,7 @@ export const getAllUsers = async (_req, res) => {
   }
 };
 
-// delete user (admin-only)
-export const deleteUser = async (req, res) => {
-  try {
-    const { userCollection } = getCollections();
-    const id = req.params.id;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).send({ error: "Invalid ID" });
-    }
-    const result = await userCollection.deleteOne({ _id: new ObjectId(id) });
-    res.send(result);
-  } catch (err) {
-    res.status(500).send({ error: "Failed to delete user" });
-  }
-};
-
-// update user (admin-only)
+// update user 
 export const updateUser = async (req, res) => {
   try {
     const { userCollection } = getCollections();
@@ -80,5 +65,20 @@ export const updateUser = async (req, res) => {
     res.send(result);
   } catch (err) {
     res.status(500).send({ error: "Failed to update user" });
+  }
+};
+
+// delete user
+export const deleteUser = async (req, res) => {
+  try {
+    const { userCollection } = getCollections();
+    const id = req.params.id;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({ error: "Invalid ID" });
+    }
+    const result = await userCollection.deleteOne({ _id: new ObjectId(id) });
+    res.send(result);
+  } catch (err) {
+    res.status(500).send({ error: "Failed to delete user" });
   }
 };

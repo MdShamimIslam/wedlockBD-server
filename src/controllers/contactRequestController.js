@@ -15,6 +15,38 @@ export const getContactRequests = async (req, res) => {
   }
 };
 
+export const checkContactRequestStatus = async (req, res) => {
+  try {
+    const { requestCollection } = getCollections();
+    const biodataId = req.params?.biodataId;
+    const userEmail = req.decoded?.email;
+
+    const request = await requestCollection.findOne({
+      selfEmail: userEmail,
+      partnerBiodataId: parseInt(biodataId),
+      status: "approved" 
+    });
+
+    if (request) {
+      return res.status(200).json({ success: true, requested: true });
+    }
+    res.status(200).json({ success: true, requested: false });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Failed to check request status" });
+  }
+};
+
+export const getAllContactRequests = async (req, res) => {
+  try {
+    const { requestCollection } = getCollections();
+    const result = await requestCollection.find({}).toArray();
+    res.send(result);
+  } catch (err) {
+    res.status(500).send({ error: "Failed to fetch all contact requests" });
+  }
+};
+
 export const addContactRequest = async (req, res) => {
   try {
     const { bioDataCollection, requestCollection } = getCollections();
@@ -77,20 +109,6 @@ export const addContactRequest = async (req, res) => {
   }
 };
 
-export const deleteContactRequest = async (req, res) => {
-  try {
-    const { requestCollection } = getCollections();
-    const id = req.params.id;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).send({ error: "Invalid ID" });
-    }
-    const result = await requestCollection.deleteOne({ _id: new ObjectId(id) });
-    res.send(result);
-  } catch (err) {
-    res.status(500).send({ error: "Failed to delete contact request" });
-  }
-};
-
 export const updateContactRequestStatus = async (req, res) => {
   try {
     const { requestCollection } = getCollections();
@@ -106,25 +124,19 @@ export const updateContactRequestStatus = async (req, res) => {
   }
 };
 
-export const checkContactRequestStatus = async (req, res) => {
+export const deleteContactRequest = async (req, res) => {
   try {
     const { requestCollection } = getCollections();
-    const biodataId = req.params?.biodataId;
-    const userEmail = req.decoded?.email;
-
-    const request = await requestCollection.findOne({
-      selfEmail: userEmail,
-      partnerBiodataId: parseInt(biodataId),
-      status: "approved" 
-    });
-
-    if (request) {
-      return res.status(200).json({ success: true, requested: true });
+    const id = req.params.id;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).send({ error: "Invalid ID" });
     }
-    res.status(200).json({ success: true, requested: false });
+    const result = await requestCollection.deleteOne({ _id: new ObjectId(id) });
+    res.send(result);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ success: false, message: "Failed to check request status" });
+    res.status(500).send({ error: "Failed to delete contact request" });
   }
 };
+
+
 
