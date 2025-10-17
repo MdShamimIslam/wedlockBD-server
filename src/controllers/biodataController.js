@@ -157,3 +157,19 @@ export const makePremium = async (req, res) => {
     res.status(500).send({ error: "Failed to make premium" });
   }
 };
+
+
+export const pairBiodata = async (req, res) => {
+  try {
+    const { bioDataCollection } = getCollections();
+    const ids = [parseInt(req.query.id1), parseInt(req.query.id2)];
+    const result = await bioDataCollection.find({ biodata_id: { $in: ids } }).toArray();
+    res.send(result);
+    
+  } catch (err) {
+    console.log('error');
+    res.status(500).send({ error: "Failed to fetch biodata pair" });
+  }
+};
+
+

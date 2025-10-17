@@ -13,7 +13,7 @@ export const verifyToken = (req, res, next) => {
     if (error) {
       return res.status(401).send({ message: "Unauthorized access" });
     }
-    req.decoded = decoded;
+    req.decoded = decoded;;
     next();
   });
 };

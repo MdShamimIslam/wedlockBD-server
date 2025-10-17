@@ -1,6 +1,6 @@
 import express from "express";
-import { getLimitedBiodatas, getBiodatas, getBiodataByEmail, getBiodataById, insertBiodata, updateBiodata, makePremium } from "../controllers/biodataController.js";
-import { verifyToken } from "../middlewares/authMiddleware.js";
+import { getLimitedBiodatas, getBiodatas, getBiodataByEmail, getBiodataById, insertBiodata, updateBiodata, makePremium, pairBiodata } from "../controllers/biodataController.js";
+import { verifyAdmin, verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
@@ -8,6 +8,10 @@ const router = express.Router();
 router.get("/byLimit", getLimitedBiodatas);
 router.get("/", getBiodatas);
 router.get("/byMail", verifyToken, getBiodataByEmail);
+// admin routes only
+router.get("/pair", verifyToken, verifyAdmin, pairBiodata);
+
+// public routes
 router.get("/:id", getBiodataById);
 
 // logged in user routes

@@ -70,24 +70,39 @@ export const updatePremiumBioStatus = async (req, res) => {
     const biodataId = parseInt(req.params.biodataId);
 
     const biodata = await premiumBiodataCollection.findOne({ biodata_id: biodataId });
+    if (!biodata) {
+      return res.status(404).json({ success: false, message: "Profile not found" });
+    }
 
-    if (!biodata) return res.status(404).json({ success: false, message: "Profile not found" });
+    if (biodata.payment_status === "approved") {
+      return res.status(200).json({ success: false, message: "This profile is already Premium." });
+    }
 
-    const premiumUpdate = premiumBiodataCollection.updateOne(
+    const premiumResult = await premiumBiodataCollection.updateOne(
       { biodata_id: biodataId },
       { $set: { payment_status: "approved" } }
     );
 
-    const mainBioUpdate = bioDataCollection.updateOne(
+    const mainResult = await bioDataCollection.updateOne(
       { biodata_id: biodataId },
       { $set: { premium_status: true } }
     );
 
-    const [premiumResult, mainResult] = await Promise.all([premiumUpdate, mainBioUpdate]);
-
-    res.status(200).json({ success: true, message: "Premium biodata approved successfully!", premiumResult, mainResult });
-  }
-  catch (err) {
+    if (premiumResult.modifiedCount > 0 || mainResult.modifiedCount > 0) {
+      return res.status(200).json({
+        success: true,
+        message: "Premium biodata approved successfully!",
+        premiumResult,
+        mainResult,
+      });
+    } else {
+      return res.status(200).json({
+        success: false,
+        message: "No changes made. This profile might already be Premium.",
+      });
+    }
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ success: false, error: "Failed to update premium bio status" });
   }
 };
