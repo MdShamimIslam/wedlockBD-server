@@ -12,7 +12,6 @@ import premiumBioRoutes from "./src/routes/premiumBioRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import biodataRoutes from "./src/routes/biodataRoutes.js";
 import profileViewRoutes from "./src/routes/profileViewRoutes.js";
-import overviewRoutes from "./src/routes/overviewRoutes.js";
 
 
 const app = express();
@@ -34,7 +33,6 @@ const startServer = async () => {
     app.use("/user-stats", userStatsRoutes);
     app.use("/success-stories", successStoryRoutes);
     app.use("/profile-views", profileViewRoutes);
-    app.use("/overview", overviewRoutes);
     app.use("/premium-bio", premiumBioRoutes);
     app.use("/admin-stats", adminStatsRoutes);
 
