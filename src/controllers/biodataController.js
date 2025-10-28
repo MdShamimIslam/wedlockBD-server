@@ -142,6 +142,36 @@ export const updateBiodata = async (req, res) => {
   }
 };
 
+// add profile view
+export const addProfileView = async (req, res) => {
+  try {
+    const { profileViewCollection } = getCollections();
+    const { profileOwnerEmail, visitorEmail, visitorName } = req.body;
+    
+    if (profileOwnerEmail === visitorEmail) {
+      return res.status(400).json({ message: "Visitor and profile owner cannot be the same" });    
+    }
+    
+    const existingProfileView = await profileViewCollection.findOne({ profileOwnerEmail, visitorEmail });
+
+    if (existingProfileView) {
+      return res.status(200).json({ message: "Profile view already exists" });
+    }
+
+    await profileViewCollection.insertOne({
+      profileOwnerEmail,
+      visitorEmail,
+      visitorName,
+      visitedAt: new Date(),
+    });
+
+    res.status(201).json({ message: "Profile view added successfully" });
+    
+  } catch (err) {
+    res.status(500).json({ message: "Server error", err });
+  }
+};
+
 // make biodata premium
 export const makePremium = async (req, res) => {
   try {

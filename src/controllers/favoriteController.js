@@ -28,6 +28,8 @@ export const addFavorite = async (req, res) => {
     if (exists) {
       return res.send({ insertedId: null });
     }
+    favoriteData.createdAt = new Date();
+    
     const result = await favoriteCollection.insertOne(favoriteData);
     res.send(result);
 

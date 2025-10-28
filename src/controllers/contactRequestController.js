@@ -90,6 +90,7 @@ export const addContactRequest = async (req, res) => {
       await requestCollection.insertOne({
         selfEmail: userEmail,
         selfName: selfBioData?.name,
+        selfImg: selfBioData?.profile_image,
         partnerBiodataId: biodata.biodata_id,
         partnerName: biodata?.name,
         partnerImg: biodata?.profile_image,

@@ -1,5 +1,6 @@
 import { getCollections } from "../config/db.js";
 import { calculateAge } from "../utils/functions.js";
+import { subDays, startOfDay } from "date-fns";
 
 export const getUserStats = async (_req, res) => {
   try {
@@ -52,5 +53,39 @@ export const getOverviewOfNormalUser = async (req, res) => {
     res.send(overview);
   } catch (err) {
     res.status(500).send({ error: "Failed to fetch of overview" });
+  }
+};
+
+export const getLast7DaysStats = async (req, res) => {
+  try {
+    const { profileViewCollection, favoriteCollection, requestCollection } = getCollections();
+    const myEmail = req.query.email;
+
+    const sevenDaysAgo = subDays(new Date(), 6);
+    const startDate = startOfDay(sevenDaysAgo);
+
+    const dayMap = { 1: "Sun", 2: "Mon", 3: "Tue", 4: "Wed", 5: "Thu", 6: "Fri", 7: "Sat" };
+
+    // Helper function for aggregation
+    const aggregateLast7Days = async (collection, matchField, dateField) => {
+      const pipeline = [
+        { $match: { [matchField]: myEmail, [dateField]: { $gte: startDate } } },
+        { $group: { _id: { $dayOfWeek: `$${dateField}` }, count: { $sum: 1 } } }
+      ];
+      const results = await collection.aggregate(pipeline).toArray();
+      return results.map(r => ({ day: dayMap[r._id], count: r.count }));
+    };
+
+    const [views, favorites, requests] = await Promise.all([
+      aggregateLast7Days(profileViewCollection, "profileOwnerEmail", "visitedAt"),
+      aggregateLast7Days(favoriteCollection, "profileOwnerEmail", "createdAt"),
+      aggregateLast7Days(requestCollection, "selfEmail", "createdAt"),
+    ]);
+
+    res.json({ views, favorites, requests });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };

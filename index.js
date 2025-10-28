@@ -11,7 +11,6 @@ import userStatsRoutes from "./src/routes/userStatsRoutes.js";
 import premiumBioRoutes from "./src/routes/premiumBioRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import biodataRoutes from "./src/routes/biodataRoutes.js";
-import profileViewRoutes from "./src/routes/profileViewRoutes.js";
 
 
 const app = express();
@@ -32,7 +31,6 @@ const startServer = async () => {
     app.use("/contact-request", contactRequestRoutes);
     app.use("/user-stats", userStatsRoutes);
     app.use("/success-stories", successStoryRoutes);
-    app.use("/profile-views", profileViewRoutes);
     app.use("/premium-bio", premiumBioRoutes);
     app.use("/admin-stats", adminStatsRoutes);
 
