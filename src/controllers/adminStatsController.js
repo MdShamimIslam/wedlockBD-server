@@ -89,7 +89,7 @@ export const getAdminStats = async (_req, res) => {
       return { name: item._id, value: item.count, color, percentage: Number(percentage) };
     });
     // ===== Top Matches (from Success Stories) =====
-    const successStories = await successStoryCollection.find().sort({ post_date: -1 }).limit(5).toArray();
+    const successStories = await successStoryCollection.find().sort({ post_date: -1 }).limit(2).toArray();
     const topMatches = await Promise.all(
       successStories.map(async (story) => {
         const selfBiodata = await bioDataCollection.findOne({ biodata_id: story.selfBiodataId });
