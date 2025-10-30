@@ -34,8 +34,12 @@ const startServer = async () => {
     app.use("/premium-bio", premiumBioRoutes);
     app.use("/admin-stats", adminStatsRoutes);
 
+    app.get("/", (_req, res) => {
+      res.send(" WedlockBD Server is Running Successfully!");
+    });
+
     app.listen(port, () => {
-      console.log(`Server running on port: ${port}`);
+      console.log(`WedlockBD Server running on port: ${port}`);
     });
 
   } catch (err) {
