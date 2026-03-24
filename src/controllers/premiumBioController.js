@@ -22,14 +22,15 @@ export const addPremiumBio = async (req, res) => {
       mode: "payment",
       success_url: `${process.env.CLIENT_SITE_URL}/checkout-success`,
       cancel_url: `${req.protocol}://${req.get("host")}/biodatas/${biodataId}`,
+      metadata: { type: "premiumBio", biodataId: biodataId.toString() },
       line_items: [
         {
           price_data: {
             currency: "usd",
             unit_amount: price * 100,
             product_data: {
-              name: biodata.name,
-              description: biodata.occupation,
+              name: `Premium Upgrade: ${biodata.name}`,
+              description: `Upgrading to Premium for Biodata ID: ${biodataId}`,
               images: [biodata.profile_image],
             },
           },
@@ -38,13 +39,7 @@ export const addPremiumBio = async (req, res) => {
       ],
     });
 
-    await premiumBiodataCollection.insertOne({
-      biodata_id: biodata.biodata_id,
-      contact_email: biodata.contact_email,
-      name: biodata.name,
-      payment_status: "pending",
-      payment_date: new Date()
-    })
+
 
     res.status(200).json({ success: true, session });
 

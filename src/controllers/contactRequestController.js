@@ -24,7 +24,7 @@ export const checkContactRequestStatus = async (req, res) => {
     const request = await requestCollection.findOne({
       selfEmail: userEmail,
       partnerBiodataId: parseInt(biodataId),
-      status: "approved" 
+      status: "approved"
     });
 
     if (request) {
@@ -54,11 +54,11 @@ export const addContactRequest = async (req, res) => {
     const userEmail = req.decoded?.email;
     const biodata = await bioDataCollection.findOne({ biodata_id: parseInt(biodataId) });
     const selfBioData = await bioDataCollection.findOne({ contact_email: userEmail });
-    
+
     if (!biodata) return res.status(404).json({ success: false, message: "Profile not found" });
-    
+
     if (biodata.contact_email === userEmail) return res.status(400).json({ success: false, message: "You cannot request your own profile" });
-   
+
     const existingRequest = await requestCollection.findOne({ selfEmail: userEmail, partnerEmail: biodata.contact_email });
     if (existingRequest) return res.status(400).json({ success: false, message: "You have already requested this profile" });
 
@@ -71,14 +71,19 @@ export const addContactRequest = async (req, res) => {
       cancel_url: `${req.protocol}://${req.get("host")}/biodatas/${biodataId}`,
       customer_email: userEmail,
       client_reference_id: biodataId,
+      metadata: { 
+        type: "contactRequest",
+        userEmail: userEmail,
+        biodataId: biodataId.toString()
+      },
       line_items: [
         {
           price_data: {
             currency: "usd",
             unit_amount: price * 100,
             product_data: {
-              name: biodata.name,
-              description: biodata.occupation,
+              name: `Contact Information: ${biodata.name}`,
+              description: `Requesting contact details for Biodata ID: ${biodataId}`,
               images: [biodata.profile_image],
             },
           },
@@ -87,20 +92,7 @@ export const addContactRequest = async (req, res) => {
       ],
     });
 
-      await requestCollection.insertOne({
-        selfEmail: userEmail,
-        selfName: selfBioData?.name,
-        selfImg: selfBioData?.profile_image,
-        partnerBiodataId: biodata.biodata_id,
-        partnerName: biodata?.name,
-        partnerImg: biodata?.profile_image,
-        partnerNumber: biodata?.contact_number,
-        partnerEmail: biodata?.contact_email,
-        price,
-        sessionId: session.id,
-        status: "pending",
-        createdAt: new Date(),
-      });
+
 
     res.status(200).json({ success: true, session });
 

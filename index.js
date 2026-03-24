@@ -11,13 +11,15 @@ import userStatsRoutes from "./src/routes/userStatsRoutes.js";
 import premiumBioRoutes from "./src/routes/premiumBioRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import biodataRoutes from "./src/routes/biodataRoutes.js";
-
+import webhookRoutes from "./src/routes/webhookRoutes.js";
 
 const app = express();
 const port = process.env.PORT || 5000;
 
+
 // middlewares
 app.use(cors());
+app.use("/webhook", express.raw({ type: "application/json" }), webhookRoutes);
 app.use(express.json());
 
 const startServer = async () => {

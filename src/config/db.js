@@ -27,6 +27,14 @@ export const connectDB = async () => {
       premiumBiodataCollection: db.collection("premiumBiodatas"),
       profileViewCollection: db.collection("profileViews"),
     };
+
+    // Create unique indexes to prevent double insert race conditions from concurrent Stripe webhooks
+    try {
+      await collections.requestCollection.createIndex({ sessionId: 1 }, { unique: true, sparse: true });
+      await collections.premiumBiodataCollection.createIndex({ sessionId: 1 }, { unique: true, sparse: true });
+    } catch (indexErr) {
+      console.warn("Could not create unique index on sessionId. Existing duplicates might be present.");
+    }
   }
   return collections;
 }
