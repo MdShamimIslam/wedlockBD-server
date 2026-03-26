@@ -1,4 +1,4 @@
-# 💒 WedlockBD - API Service (Server-Side)
+# 💒 WedlockBD - API Service
 
 Welcome to the backend infrastructure of **WedlockBD**, a sophisticated matrimonial system handling everything from user profile analytics to Stripe webhook verifications. This RESTful API is built with Node.js and Express.
 

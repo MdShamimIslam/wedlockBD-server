@@ -16,7 +16,6 @@ import webhookRoutes from "./src/routes/webhookRoutes.js";
 const app = express();
 const port = process.env.PORT || 5000;
 
-
 // middlewares
 app.use(cors());
 app.use("/webhook", express.raw({ type: "application/json" }), webhookRoutes);
